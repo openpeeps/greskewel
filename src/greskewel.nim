@@ -27,18 +27,18 @@ type
     # https://github.com/fergusstrange/embedded-postgres/blob/master/config.go#L11
 
   PostgresBoxConfig* = ref object
-    version: PostgresVersion
+    version: PostgresVersion = PostgresVersion.v16
       # The version of Postgres to use. You can specify a specific
       # version like "16.4.0" or use a predefined version
       # from the PostgresVersion enum.
     port*: Port = Port(5432)
       # Default port for Postgres is 5432, but you
       # can specify a different one if needed.
-    database: string
+    database: string = "postgres"
       # Name of the default database to create when Postgres starts.
-    username: string
+    username: string = "postgres"
       # Username for the default database. Default is "postgres".
-    password: string
+    password: string = "postgres"
       # Password for the default database user. Default is "postgres".
     basePath*: string
       # Base path for all Postgres-related files. This is the root
@@ -61,11 +61,11 @@ type
     startParameters: Table[string, string]
       # Additional parameters to pass when starting Postgres,
       # such as shared_buffers, max_connections, etc.
-    binaryRepositoryURL: string
+    binaryRepositoryURL: string = "https://repo1.maven.org/maven2/"
       # URL to download Postgres binaries. Default is the Maven Central repository.
     startTimeout: Duration
       # Timeout for starting the Postgres server. Default is 30 seconds.
-    logger: string # todo
+    # logger: string # todo
 
   EmbeddedPostgres* = object
     config: PostgresBoxConfig
@@ -75,25 +75,14 @@ type
 
 var greskewChan = newChan[string]()
 
-proc getDefaultConfig*(version: PostgresVersion): PostgresBoxConfig =
-  ## Returns a default configuration for the specified Postgres version.
-  result = PostgresBoxConfig(
-    version: PostgresVersion.v16,
-    database: "postgres",
-    username: "postgres",
-    password: "postgres",
-    locale: "en_US.UTF-8",
-    startParameters: initTable[string, string](),
-    dataPath: "data",
-    binaryRepositoryURL: "https://repo1.maven.org/maven2/",
-    startTimeout: initDuration(seconds = 30)
-  )
-
-proc initGreskewel*(config: PostgresBoxConfig = nil): EmbeddedPostgres =
+proc initGreskewel*(config: PostgresBoxConfig = nil,
+                        version: PostgresVersion.v16): EmbeddedPostgres =
+  ## Initializes the embedded Postgres server with the specified configuration.
+  ## If no configuration is provided, it uses the default configuration for the specified version.
   result = EmbeddedPostgres(
     config:
       if config != nil: config
-      else: getDefaultConfig(PostgresVersion.v16),
+      else: PostgresBoxConfig(version: version)
   )
   if result.config.binaryRepositoryURL.len == 0:
     result.config.binaryRepositoryURL = "https://repo1.maven.org/maven2/"
@@ -242,3 +231,49 @@ proc getVersion*(ep: EmbeddedPostgres): PostgresVersion =
 proc getConfig*(ep: EmbeddedPostgres): PostgresBoxConfig =
   ## Get the configuration of the embedded Postgres server
   result = ep.config
+
+
+# {.passL:"./bin/darwin/lib/libpq.dylib".}
+
+# include pkg/db_connector/db_postgres
+# let db = open("localhost", "georgelemon", "postgres", "postgres")
+
+# db.exec(sql("""CREATE TABLE myTable (id integer, name varchar(50) not null)"""))
+# db.exec(sql"""INSERT INTO myTable (id, name) VALUES (1, 'Alice')""")
+
+# for row in db.getAllRows(sql"""SELECT * FROM myTable"""):
+#   echo "Row: ", row
+
+when isMainModule:
+  # Initialize the embedded Postgres server with the default configuration.
+  var greskew = initGreskewel(
+    PostgresBoxConfig(
+      basePath: getCurrentDir() / "greskewelbox",
+    )
+  )
+
+  # Download the Postgres binaries for the specified version
+  # and store them in the configured path.
+  greskew.downloadBinaries()
+
+  # Initialize the Postgres server
+  # This will set up the data directory and prepare
+  # the server for starting. 
+  greskew.init()
+
+  # Start the Postgres server
+  # This proc will run in a separate thread
+  # to avoid blocking the main thread.
+  greskew.start()
+
+  
+  import pkg/db_connector/db_postgres
+  let db = open("localhost", "postgres", "postgres", "postgres")
+  db.exec(sql"""CREATE TABLE myTable (id integer, name varchar(50) not null)""")
+  db.exec(sql"""INSERT INTO myTable (id, name) VALUES (1, 'Alice')""")
+  for row in db.getAllRows(sql"""SELECT * FROM myTable"""):
+    echo "Row: ", row
+  
+  greskew.stop()
+
+  sleep(2000) # wait a bit for the server to stop before exiting
