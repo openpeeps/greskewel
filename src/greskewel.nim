@@ -11,8 +11,6 @@
 #          https://github.com/openpeeps/postgresbox
 
 import std/[tables, times, os, osproc, strutils, net]
-
-import pkg/semver
 import pkg/threading/channels
 
 type
@@ -26,7 +24,7 @@ type
 
     # https://github.com/fergusstrange/embedded-postgres/blob/master/config.go#L11
 
-  PostgresBoxConfig* = ref object
+  PostgresConfig* = ref object
     version: PostgresVersion = PostgresVersion.v16
       # The version of Postgres to use. You can specify a specific
       # version like "16.4.0" or use a predefined version
@@ -68,21 +66,21 @@ type
     # logger: string # todo
 
   EmbeddedPostgres* = object
-    config: PostgresBoxConfig
+    config: PostgresConfig
     started: bool
 
   GreskewelConfigError* = object of CatchableError
 
 var greskewChan = newChan[string]()
 
-proc initGreskewel*(config: PostgresBoxConfig = nil,
-                        version: PostgresVersion.v16): EmbeddedPostgres =
+proc initEmbeddedPostgres*(config: PostgresConfig = nil,
+            version: PostgresVersion = PostgresVersion.v16): EmbeddedPostgres =
   ## Initializes the embedded Postgres server with the specified configuration.
   ## If no configuration is provided, it uses the default configuration for the specified version.
   result = EmbeddedPostgres(
     config:
       if config != nil: config
-      else: PostgresBoxConfig(version: version)
+      else: PostgresConfig(version: version)
   )
   if result.config.binaryRepositoryURL.len == 0:
     result.config.binaryRepositoryURL = "https://repo1.maven.org/maven2/"
@@ -101,8 +99,24 @@ const
   binPgCtlAppPath = "$1/$2/pg_ctl" % [getCurrentOS, "bin"]
     # Note: The actual paths to the Postgres binaries may vary based on the version and platform.
 
+template ensureDirs() =
+  if ep.config.basePath.len == 0 or ep.config.basePath.isAbsolute == false:
+    raise newException(GreskewelConfigError,
+      "Base path must be specified and absolute in the configuration.")
+  if ep.config.dataPath.len == 0:
+    raise newException(GreskewelConfigError,
+      "Data path must be specified in the configuration.")
+  if ep.config.binariesPath.len == 0:
+    raise newException(GreskewelConfigError,
+      "Binaries path must be specified in the configuration.")
+  
+  discard existsOrCreateDir(ep.config.basePath)
+  discard existsOrCreateDir(ep.config.basePath / ep.config.runtimePath)
+  discard existsOrCreateDir(ep.config.basePath / ep.config.binariesPath)
+
 proc downloadBinaries*(ep: var EmbeddedPostgres) =
   ## Download the Postgres binaries for the specified version and store them in the configured path.
+  ensureDirs()
   let jarFile = jarBinaryEndpoint % [getCurrentOS, hostCPU, $ep.config.version]
   let jarUrl = ep.config.binaryRepositoryURL & (binariesEndpoint % [getCurrentOS, hostCPU, $ep.config.version]) & jarFile
   
@@ -139,31 +153,17 @@ proc encodeOptions(port: Port, parameters: Table[string, string]): string =
 proc init*(ep: var EmbeddedPostgres) =
   ## Initialize the embedded Postgres server with the specified configuration.
   echo "Initializing embedded Postgres version ", $ep.config.version
-  if ep.config.basePath.len == 0 or ep.config.basePath.isAbsolute == false:
-    raise newException(GreskewelConfigError,
-      "Base path must be specified and absolute in the configuration.")
-  if ep.config.dataPath.len == 0:
-    raise newException(GreskewelConfigError,
-      "Data path must be specified in the configuration.")
-  if ep.config.binariesPath.len == 0:
-    raise newException(GreskewelConfigError,
-      "Binaries path must be specified in the configuration.")
-  
-  discard existsOrCreateDir(ep.config.basePath)
-  discard existsOrCreateDir(ep.config.basePath / ep.config.runtimePath)
-  discard existsOrCreateDir(ep.config.basePath / ep.config.binariesPath)
-
+  ensureDirs()
   let dataPath = ep.config.basePath / ep.config.dataPath
-  if not dataPath.dirExists:
-    # Initialize the Postgres data directory using the `initdb` binary 
-    let initDbApp = ep.config.basePath / ep.config.binariesPath / $ep.config.version / binInitAppPath
-    if not initDbApp.fileExists():
-      raise newException(GreskewelConfigError,
-        "`initdb` binary not found at expected path: " & initDbApp)
-    let res = execCmdEx(initDbApp & " -D " & dataPath & " --username postgres")
-    if res.exitCode != 0:
-      raise newException(GreskewelConfigError,
-        "Failed to initialize Postgres data directory: " & res.output)
+  # Initialize the Postgres data directory using the `initdb` binary 
+  let initDbApp = ep.config.basePath / ep.config.binariesPath / $ep.config.version / binInitAppPath
+  if not initDbApp.fileExists():
+    raise newException(GreskewelConfigError,
+      "`initdb` binary not found at expected path: " & initDbApp)
+  let res = execCmdEx(initDbApp & " -D " & dataPath & " --username postgres")
+  if res.exitCode != 0:
+    raise newException(GreskewelConfigError,
+      "Failed to initialize Postgres data directory: " & res.output)
   
 type
   PostgresThreadInfo = tuple
@@ -204,11 +204,18 @@ proc start*(ep: var EmbeddedPostgres) =
 proc stop*(ep: var EmbeddedPostgres) =
   ## Stop the embedded Postgres server
   greskewChan.send("pg.stop")
+  sleep(5000) # wait a bit for the server to stop before exiting 
 
 proc restart*(ep: var EmbeddedPostgres) =
   ## Restart the embedded Postgres server
   stop(ep)
   start(ep)
+
+proc dispose*(ep: var EmbeddedPostgres) =
+  ## Dispose of the data directory and any resources used by the embedded Postgres server.
+  let dataPath = ep.config.basePath / ep.config.dataPath
+  if dataPath.dirExists and fileExists(dataPath / "postmaster.pid") == false:
+    removeDir(dataPath)
 
 proc status*(ep: EmbeddedPostgres): string =
   ## Get the status of the embedded Postgres server
@@ -228,52 +235,6 @@ proc getVersion*(ep: EmbeddedPostgres): PostgresVersion =
   ## Get the version of the embedded Postgres server
   result = ep.config.version
 
-proc getConfig*(ep: EmbeddedPostgres): PostgresBoxConfig =
+proc getConfig*(ep: EmbeddedPostgres): PostgresConfig =
   ## Get the configuration of the embedded Postgres server
   result = ep.config
-
-
-# {.passL:"./bin/darwin/lib/libpq.dylib".}
-
-# include pkg/db_connector/db_postgres
-# let db = open("localhost", "georgelemon", "postgres", "postgres")
-
-# db.exec(sql("""CREATE TABLE myTable (id integer, name varchar(50) not null)"""))
-# db.exec(sql"""INSERT INTO myTable (id, name) VALUES (1, 'Alice')""")
-
-# for row in db.getAllRows(sql"""SELECT * FROM myTable"""):
-#   echo "Row: ", row
-
-when isMainModule:
-  # Initialize the embedded Postgres server with the default configuration.
-  var greskew = initGreskewel(
-    PostgresBoxConfig(
-      basePath: getCurrentDir() / "greskewelbox",
-    )
-  )
-
-  # Download the Postgres binaries for the specified version
-  # and store them in the configured path.
-  greskew.downloadBinaries()
-
-  # Initialize the Postgres server
-  # This will set up the data directory and prepare
-  # the server for starting. 
-  greskew.init()
-
-  # Start the Postgres server
-  # This proc will run in a separate thread
-  # to avoid blocking the main thread.
-  greskew.start()
-
-  
-  import pkg/db_connector/db_postgres
-  let db = open("localhost", "postgres", "postgres", "postgres")
-  db.exec(sql"""CREATE TABLE myTable (id integer, name varchar(50) not null)""")
-  db.exec(sql"""INSERT INTO myTable (id, name) VALUES (1, 'Alice')""")
-  for row in db.getAllRows(sql"""SELECT * FROM myTable"""):
-    echo "Row: ", row
-  
-  greskew.stop()
-
-  sleep(2000) # wait a bit for the server to stop before exiting

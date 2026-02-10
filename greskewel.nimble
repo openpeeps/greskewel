@@ -2,7 +2,7 @@
 
 version       = "0.1.0"
 author        = "George Lemon"
-description   = "Postgres in a box"
+description   = "Embedded Postgres in a Box"
 license       = "MIT"
 srcDir        = "src"
 
