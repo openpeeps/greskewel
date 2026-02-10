@@ -4,7 +4,7 @@ import pkg/db_connector/db_postgres
 import ../src/greskewel
 
 var greskew: EmbeddedPostgres
-test "can download, init, start, connect, query, and stop":
+test "can download":
   # Initialize the embedded Postgres server with the default configuration.
   var greskew = initEmbeddedPostgres(
     PostgresConfig(
