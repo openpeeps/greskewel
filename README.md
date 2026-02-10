@@ -53,7 +53,7 @@ greskew.init()
 # (host, port, user, password, database) and use it like a regular Postgres instance.
 greskew.start()
 
-# run queries, do stuff, etc.
+# run queries, do stuff, etc...
 
 # Stop the embedded Postgres server when you're done.
 # This will gracefully shut down the Postgres server
@@ -66,16 +66,18 @@ Once the embedded Postgres server is running, you can connect to it using the pr
 
 import db_connector/db_postgres
 
-let conn = newDbConnection(
-  host = greskew.host, # localhost
-  port = greskew.port, # 35432
-  user = greskew.user, # postgres
-  password = greskew.password, # postgres
-  database = greskew.database # postgres
-)
+# connect to the embedded Postgres instance using the default connection details
+let db = open("localhost", "postgres", "postgres", "postgres")
 
-db.exec(sql("""CREATE TABLE myTable (id integer, name varchar(50) not null)"""))
+# create a table
+db.exec(sql"""CREATE TABLE myTable (id integer, name varchar(50) not null)""")
+
+# insert some data
 db.exec(sql"""INSERT INTO myTable (id, name) VALUES (1, 'Alice')""")
+
+# query the data
+for row in db.getAllRows(sql"""SELECT * FROM myTable"""):
+  echo "Row: ", row
 ```
 
 ### What's the point of this?
