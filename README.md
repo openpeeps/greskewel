@@ -32,18 +32,25 @@ Download the Postgres binaries for the specified version, initialize the data di
 ```nim
 import greskewel
 
-# Initialize the embedded Postgres using default configuration (e.g., version 16, default paths, etc.). You can also provide a custom configuration if needed.
+# Initialize the embedded Postgres using default configuration
+# (e.g., version 16, default paths, etc.). You can also provide
+# a custom configuration if needed.
 var greskew = initGreskewel()
 
 # Download the Postgres binaries for the specified version
 # and store them in the configured path.
 greskew.downloadBinaries()
 
-# Initialize the Postgres data directory and configuration. This prepares the embedded Postgres instance for starting. This step is required before starting the server for the first time, but can be skipped on subsequent runs if the data directory is already initialized.
+# Initialize the Postgres data directory and configuration. This prepares
+# the embedded Postgres instance for starting. This step is required
+# before starting the server for the first time, but can be skipped on
+# subsequent runs if the data directory is already initialized.
 greskew.init()
 
-# Starting the embedded Postgres server. This will launch the Postgres server in
-a separate thread and make it available for connections. You can then connect to it using the provided connection details (host, port, user, password, database) and use it like a regular Postgres instance.
+# Starting the embedded Postgres server. This will launch the Postgres
+# server in a separate thread and make it available for connections.
+# You can then connect to it using the provided connectio details
+# (host, port, user, password, database) and use it like a regular Postgres instance.
 greskew.start()
 
 # run queries, do stuff, etc.
