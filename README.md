@@ -88,10 +88,17 @@ Describing the use cases for an embedded Postgres instance via Greskewel for Nim
 - **Production**: In some cases, you might want to use an embedded Postgres instance in production, especially for lightweight applications or when you want to avoid external dependencies. Greskewel can be used to run a local Postgres instance as part of your application without requiring users to install Postgres separately. (**not recommended for high-load production environments, but can be useful for certain use cases**)
 - **Disposable Instances**: Create disposable Postgres instances for testing or development that can be easily created and destroyed without leaving any residue on the system.
 
+
+Inspired by [fergusstrange/embedded-postgress](https://github.com/fergusstrange/embedded-postgres), [zonkyio/embedded-postgres](https://github.com/zonkyio/embedded-postgres)
+and [opentable/otj-pg-embedded](https://github.com/opentable/otj-pg-embedded) and reliant on the great work being done
+by [zonkyio/embedded-postgres-binaries](https://github.com/zonkyio/embedded-postgres-binaries) in order to fetch
+precompiled binaries from [Maven](https://mvnrepository.com/artifact/io.zonky.test.postgres/embedded-postgres-binaries-bom).
+
 ### ❤ Contributions & Support
 - 🐛 Found a bug? [Create a new Issue](https://github.com/openpeeps/greskewel/issues)
 - 👋 Wanna help? [Fork it!](https://github.com/openpeeps/greskewel/fork)
 - 😎 [Get €20 in cloud credits from Hetzner](https://hetzner.cloud/?ref=Hm0mYGM9NxZ4)
+
 
 ### 🎩 License
 MIT license. [Made by Humans from OpenPeeps](https://github.com/openpeeps).<br>
