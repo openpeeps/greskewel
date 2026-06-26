@@ -100,7 +100,6 @@ precompiled binaries from [Maven](https://mvnrepository.com/artifact/io.zonky.te
 ### ❤ Contributions & Support
 - 🐛 Found a bug? [Create a new Issue](https://github.com/openpeeps/greskewel/issues)
 - 👋 Wanna help? [Fork it!](https://github.com/openpeeps/greskewel/fork)
-- 😎 [Get €20 in cloud credits from Hetzner](https://hetzner.cloud/?ref=Hm0mYGM9NxZ4)
 
 
 ### 🎩 License
