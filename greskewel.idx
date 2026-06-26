@@ -13,12 +13,12 @@ nim	initEmbeddedPostgres	greskewel.html#initEmbeddedPostgres,PostgresConfig,Post
 nim	getCurrentOS	greskewel.html#getCurrentOS	const getCurrentOS		94
 nim	downloadBinaries	greskewel.html#downloadBinaries,EmbeddedPostgres	proc downloadBinaries(ep: var EmbeddedPostgres)		117
 nim	init	greskewel.html#init,EmbeddedPostgres	proc init(ep: var EmbeddedPostgres)		153
-nim	start	greskewel.html#start,EmbeddedPostgres	proc start(ep: var EmbeddedPostgres)		194
-nim	stop	greskewel.html#stop,EmbeddedPostgres	proc stop(ep: var EmbeddedPostgres)		204
-nim	restart	greskewel.html#restart,EmbeddedPostgres	proc restart(ep: var EmbeddedPostgres)		209
-nim	dispose	greskewel.html#dispose,EmbeddedPostgres	proc dispose(ep: var EmbeddedPostgres)		214
-nim	status	greskewel.html#status,EmbeddedPostgres	proc status(ep: EmbeddedPostgres): string		220
-nim	isRunning	greskewel.html#isRunning,EmbeddedPostgres	proc isRunning(ep: EmbeddedPostgres): bool		225
-nim	getConnectionString	greskewel.html#getConnectionString,EmbeddedPostgres	proc getConnectionString(ep: EmbeddedPostgres): string		229
-nim	getVersion	greskewel.html#getVersion,EmbeddedPostgres	proc getVersion(ep: EmbeddedPostgres): PostgresVersion		234
-nim	getConfig	greskewel.html#getConfig,EmbeddedPostgres	proc getConfig(ep: EmbeddedPostgres): PostgresConfig		238
+nim	start	greskewel.html#start,EmbeddedPostgres	proc start(ep: var EmbeddedPostgres)		193
+nim	stop	greskewel.html#stop,EmbeddedPostgres	proc stop(ep: var EmbeddedPostgres)		203
+nim	restart	greskewel.html#restart,EmbeddedPostgres	proc restart(ep: var EmbeddedPostgres)		208
+nim	dispose	greskewel.html#dispose,EmbeddedPostgres	proc dispose(ep: var EmbeddedPostgres)		213
+nim	status	greskewel.html#status,EmbeddedPostgres	proc status(ep: EmbeddedPostgres): string		219
+nim	isRunning	greskewel.html#isRunning,EmbeddedPostgres	proc isRunning(ep: EmbeddedPostgres): bool		224
+nim	getConnectionString	greskewel.html#getConnectionString,EmbeddedPostgres	proc getConnectionString(ep: EmbeddedPostgres): string		228
+nim	getVersion	greskewel.html#getVersion,EmbeddedPostgres	proc getVersion(ep: EmbeddedPostgres): PostgresVersion		233
+nim	getConfig	greskewel.html#getConfig,EmbeddedPostgres	proc getConfig(ep: EmbeddedPostgres): PostgresConfig		237
