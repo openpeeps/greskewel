@@ -187,7 +187,6 @@ proc postgresThread(pg: PostgresThreadInfo) {.thread.} =
                       args = ["start", "-w", "-D", pg[1], "-o", encodedOpts])
       elif command == "pg.stop" and pidPath.fileExists():
         let res = execCmdEx(pg.binPath / binPgCtlAppPath & " stop -w -D " & pg[1])
-        # echo res 
     sleep(100) # small delay to prevent busy waiting
 
 var worker: Thread[PostgresThreadInfo]
