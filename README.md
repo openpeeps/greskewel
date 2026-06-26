@@ -17,6 +17,9 @@ Run a real Postgres database locally on Linux, macOS, and Windows as part of you
 
 Greskewel provides a simple API to manage the lifecycle of an embedded Postgres instance directly from your Nim code. Also, is 100% compatible with the official Postgres client libraries!
 
+> [!NOTE]
+> All the binaries are automatically downloaded from Maven Repository https://mvnrepository.com/repos/central and stored in the provided directory.
+
 ## 😍 Key Features
 - Local Postgres instance without installation
 - Cross-platform support (Linux, macOS, Windows)
